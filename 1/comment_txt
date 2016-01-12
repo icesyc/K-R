@@ -1,0 +1,8 @@
+#include <stdio.h>
+int main(void)
+{
+    /* print the number three */
+    printf("%d\n", 6/'\2');
+    /* remember to return a value from main */
+    return 0;
+}

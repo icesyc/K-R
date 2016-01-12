@@ -1,0 +1,570 @@
+=====================================
+7-1.c	page 1
+=====================================
+/**
+ * 编写一个程序，根据它自身被调用时存放在argv[0]中的名字，实现将大写字母转换为小写字母或将小写字母转换为大写字母的功能。
+ */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+int main(int argc, char *argv[]){
+	char *p = argv[0];
+	char c;
+	if(strcmp(p, "lower") == 0){
+		while((c = getchar()) != EOF){
+			putchar(tolower(c));
+		}
+	}else{
+		while((c = getchar()) != EOF){
+			putchar(toupper(c));
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+############## p1 ###################
+=====================================
+7-2.c	page 1
+=====================================
+/**
+ * 编写一个程序，以合理的方式打印任何输入。
+ * 该程序至少能够根据用户的习惯以八进制或十六进制打印非图形字符，并截断长文本行。
+ */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#define COL_NUM 10
+
+int inc(int pos, int len){
+	if(pos + len > COL_NUM){
+		putchar('\n');
+		return len;
+	}else{
+		return pos + len;
+	}
+}
+int main(){
+	char c;
+	int pos = 0;
+	while((c = getchar()) != EOF){
+		if(iscntrl(c) || c == ' '){
+			pos = inc(pos, 4);
+			printf("\\%03o", c);
+		}else{
+
+############## p1 ###################
+=====================================
+7-2.c	page 2
+=====================================
+			pos = inc(pos, 1);
+			putchar(c);
+		}
+	}
+	return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p2 ###################
+=====================================
+7-3.c	page 1
+=====================================
+/**
+ * 改成minprintf函数，使它能完成printf函数的更多功能。
+ */
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
+
+void minprintf(char *fmt, ...);
+int main(int argc, char *argv[]){
+	minprintf("test %s %d %f", "a", 12, 5.8);
+	return 0;
+}
+void minprintf(char *fmt, ...){
+	char *p;
+	int ival;
+	double dval;
+	char *sval;
+	va_list ap;
+	va_start(ap, fmt);
+	char localfmt[100];
+	for(p = fmt; *p; p++){
+		if(*p != '%'){
+			putchar(*p);
+			continue;
+		}
+
+############## p1 ###################
+=====================================
+7-3.c	page 2
+=====================================
+		int i = 0;
+		while(!isalpha(*p) && *p != EOF){
+			localfmt[i++] = *p++;
+		}
+		localfmt[i++] = *p;
+		localfmt[i] = '\0';
+
+		switch(*p){
+			case 'd':
+				ival = va_arg(ap, int);
+				printf(localfmt, ival);
+				break;
+			case 's':
+				sval = va_arg(ap, char *);
+				while(*sval){
+					putchar(*sval++);
+				}
+				break;
+			case 'f':
+				dval = va_arg(ap, double);
+				printf(localfmt, dval);
+				break;
+			default:
+				putchar(*p);
+				break;
+
+############## p2 ###################
+=====================================
+7-3.c	page 3
+=====================================
+		}
+	}
+	va_end(ap);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p3 ###################
+=====================================
+7-4.c	page 1
+=====================================
+/**
+ * 类似于上一节中的函数minprintf，编写scanf函数的一个简化版本。
+ */
+#include <stdio.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <stdlib.h>
+void minscanf(char *fmt, ...);
+int main(int argc, char *argv[]){
+	unsigned n;
+	char str[100];
+	minscanf("%s|%d", str, &n);
+	printf("str=%s n=%u\n", str, n);
+	return 0;
+}
+void minscanf(char *fmt, ...){
+	char *p;
+	unsigned *ip;
+	double *dp;
+	char *sp;
+	char localfmt[100];
+	va_list ap;
+	va_start(ap, fmt);
+	int i;
+	for(p = fmt; *p != '\0'; p++){
+
+############## p1 ###################
+=====================================
+7-4.c	page 2
+=====================================
+		if(*p != '%'){
+			localfmt[i++] = *p;
+			continue;
+		}
+		localfmt[i++] = *p++;
+		while(*p != EOF && !isalpha(*p)){
+			localfmt[i++] = *p++;
+		}
+		localfmt[i++] = *p;	
+		localfmt[i] = '\0';
+		printf("fmt=%s\n", localfmt);
+		switch(*p){
+			case 'u':
+				ip = va_arg(ap, unsigned *);
+				scanf(localfmt, ip);
+				break;
+			case 's':
+				sp = va_arg(ap, char *);
+				scanf(localfmt, sp);
+				break;
+			case 'f':
+				dp = va_arg(ap, double *);
+				scanf(localfmt, dp);
+				break;
+			default:
+
+############## p2 ###################
+=====================================
+7-4.c	page 3
+=====================================
+				scanf(localfmt);
+				break;
+		}
+		i = 0;
+	}
+	va_end(ap);
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p3 ###################
+=====================================
+7-5.c	page 1
+=====================================
+/**
+ * 改写第4章中的后缀计算器程序，用scanf函数和(或)sscanf函数实现输入以及数的转换。
+ */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+
+#define NUMBER '0'
+
+int getop(char *s);
+int main(int argc, char *argv[]){
+	char s[100];
+	while(getop(s) != EOF){
+		printf("op=%s\n", s);
+	}
+	return 0;
+}
+
+int getop(char s[]){
+	char c;
+	float f;
+	while((c = getchar()) == ' ' || c == '\t' || c == '\n');
+	s[0] = c;
+	if(c == EOF){
+		return c;
+
+############## p1 ###################
+=====================================
+7-5.c	page 2
+=====================================
+	}
+	if(!isnumber(c) && c != '.'){
+		s[1] = '\0';
+		return c;
+	}
+	ungetc(c, stdin);
+	scanf("%f", &f);
+	sprintf(s, "%f", f);
+	return NUMBER;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p2 ###################
+=====================================
+7-6.c	page 1
+=====================================
+/**
+ * 编写一个程序，比较两个文件并打印它们第一个不相同的行。
+ */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+#define MAXLINE 1000
+void compare(char *f1, char *f2);
+int main(int argc, char *argv[]){
+	if(argc < 3){
+		printf("usage: %s file1 file2\n", *argv);
+		exit(1);
+	}
+	char *f1 = argv[1];
+	char *f2 = argv[2];
+	compare(f1, f2);
+	return 0;
+}
+
+void compare(char *f1, char *f2){
+	FILE *fp1 = fopen(f1, "r");
+	FILE *fp2 = fopen(f2, "r");
+	if(fp1 == NULL || fp2 == NULL){
+		printf("can not open file %s\n", fp1 == NULL ? f1 : f2);
+
+############## p1 ###################
+=====================================
+7-6.c	page 2
+=====================================
+	}
+	char line1[MAXLINE], line2[MAXLINE];
+	while(fgets(line1, MAXLINE, fp1) != NULL && fgets(line2, MAXLINE, fp2) != NULL){
+		if(strcmp(line1, line2) != 0){
+			printf("line1=%s", line1);
+			printf("line2=%s", line2);
+			break;
+		}	
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p2 ###################
+=====================================
+7-7.c	page 1
+=====================================
+/**
+ * 修改第5章的模式查找程序，使它从一个命名文件的集合中读取输入（有文件名参数时），如果没有文件名参数，则从标准输入中
+ * 读取输入。当发现一个匹配行时，是否应该将相应的文件名打印出来？
+ */
+#include <stdio.h>
+#include <ctype.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define MAXLINE 1000
+void fpat(FILE *fp, char *fname, char *pattern, int except, int number);
+int main(int argc, char *argv[]){
+	char *arg;
+	char pattern[MAXLINE];
+	int number, except;
+	FILE *fp;
+	while(--argc > 0 && (*++argv)[0] == '-'){
+		arg = *argv;
+		while(*++arg != '\0'){
+			switch (*arg) {
+				case 'n':
+				number = 1;
+				break;
+				case 'x':
+				except = 1;
+
+############## p1 ###################
+=====================================
+7-7.c	page 2
+=====================================
+				break;
+			}
+		}
+	}
+	if(argc > 0){
+		strcpy(pattern, *argv);
+	}else{
+		printf("Usage: find [-xn] pattern [file...]\n");
+		exit(1);
+	}
+	if(argc == 1){
+		fpat(stdin, "", pattern, except, number);
+	}else{
+		while(--argc > 0){
+			fp = fopen(*++argv, "r");
+			if(fp == NULL){
+				fprintf(stderr, "can not open file %s\n", *argv);
+				exit(1);
+			}else{
+				fpat(fp, *argv, pattern, except, number);
+				fclose(fp);
+			}
+		}
+	}
+	return 0;
+
+############## p2 ###################
+=====================================
+7-7.c	page 3
+=====================================
+}
+void fpat(FILE *fp, char *fname, char *pattern, int except, int number){
+	char line[MAXLINE];
+	int found = 0;
+	int lines = 0;
+	while(fgets(line, MAXLINE, fp) != NULL){
+		lines++;
+		found = strstr(line, pattern) != NULL;
+		if(found != except){
+			if(*fname){
+				printf("%s - ", fname);
+			}
+			if(number){
+				printf("%d: ", lines);
+			}
+			printf("%s", line);
+		}
+	}
+}
+
+
+
+
+
+
+
+############## p3 ###################
+=====================================
+7-8.c	page 1
+=====================================
+/**
+ * 编写一个程序，以打印一个文件集合，每个文件从新的一页开始打印，并且打印每个文件相应的标题和页数。
+ */
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+#define MAXLINE 1000
+#define MAXPAGE 30
+#define PAD_BOTTOM 2
+void printfile(FILE *fp, char *fname);
+
+int main(int argc, char *argv[]){
+	char *arg;
+	FILE *fp;
+	while(--argc > 0){
+		arg = *++argv;
+		fp = fopen(arg, "r");
+		if(fp ==  NULL){
+			fprintf(stderr, "can not open file: %s\n", arg);
+			continue;
+		}
+		printfile(fp, arg);
+		fclose(fp);
+
+	}
+
+############## p1 ###################
+=====================================
+7-8.c	page 2
+=====================================
+	return 0;
+}
+int printhead(char *fname, int pageno){
+	printf("=====================================\n");
+	printf("%s\tpage %d\n", fname, pageno);
+	printf("=====================================\n");
+	return 3;
+}
+void printfoot(int pageno){
+	printf("\n");
+	printf("############## p%d ###################\n", pageno);
+}
+void printfile(FILE *fp, char *fname){
+	char line[MAXLINE];
+	int pageno = 1;
+	int lineno = printhead(fname, pageno);
+	while(fgets(line, MAXLINE, fp) != NULL){
+		if(lineno >= MAXPAGE - PAD_BOTTOM){
+			printfoot(pageno);
+			lineno = printhead(fname, ++pageno);
+		}
+		printf("%s", line);
+		if(line[strlen(line)-1] != '\n'){
+			printf("\n");
+		}
+
+############## p2 ###################
+=====================================
+7-8.c	page 3
+=====================================
+		lineno++;
+	}
+	while(lineno++ < MAXPAGE - PAD_BOTTOM){
+		printf("\n");
+	}
+	printfoot(pageno);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+############## p3 ###################
